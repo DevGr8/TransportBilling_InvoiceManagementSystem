@@ -28,7 +28,6 @@ public:
   }
 
   string toCSV() const {
-
     return to_string(clientId) + "," + name + "," + contactNumber;
   }
 
@@ -77,7 +76,6 @@ public:
   }
 
   string toCSV() const {
-
     return to_string(tripId) + "," + to_string(distanceKm) + "," +
            to_string(ratePerKm) + "," + to_string(baseFare) + "," +
            to_string(extraCharges);
@@ -304,6 +302,100 @@ void loadInvoices(vector<unique_ptr<Invoice>> &invoices,
     cout << "[DB] Loaded " << invoices.size() << " invoice(s).\n";
 }
 
+void deleteClient(vector<unique_ptr<Client>> &clients,
+                  const vector<unique_ptr<Invoice>> &invoices) {
+  if (clients.empty()) {
+    cout << "[ERROR] No clients to delete.\n";
+    return;
+  }
+  cout << "\nRegistered Clients:\n";
+  for (const auto &c : clients)
+    c->display();
+
+  int id;
+  cout << "Enter Client ID to delete: ";
+  cin >> id;
+
+  for (const auto &inv : invoices) {
+    if (inv->getClientId() == id) {
+      cout << "[ERROR] Cannot delete client — an invoice references this client.\n";
+      return;
+    }
+  }
+
+  for (auto it = clients.begin(); it != clients.end(); ++it) {
+    if ((*it)->getId() == id) {
+      clients.erase(it);
+      saveClients(clients);
+      cout << "[SUCCESS] Client " << id << " deleted.\n";
+      return;
+    }
+  }
+
+  cout << "[ERROR] No client found with ID " << id << ".\n";
+}
+
+void deleteTrip(vector<unique_ptr<Trip>> &trips,
+                const vector<unique_ptr<Invoice>> &invoices) {
+  if (trips.empty()) {
+    cout << "[ERROR] No trips to delete.\n";
+    return;
+  }
+  cout << "\nLogged Trips:\n";
+  for (const auto &t : trips)
+    t->display();
+
+  int id;
+  cout << "Enter Trip ID to delete: ";
+  cin >> id;
+
+  for (const auto &inv : invoices) {
+    if (inv->getTripId() == id) {
+      cout << "[ERROR] Cannot delete trip — an invoice references this trip.\n";
+      return;
+    }
+  }
+
+  for (auto it = trips.begin(); it != trips.end(); ++it) {
+    if ((*it)->getTripId() == id) {
+      trips.erase(it);
+      saveTrips(trips);
+      cout << "[SUCCESS] Trip " << id << " deleted.\n";
+      return;
+    }
+  }
+
+  cout << "[ERROR] No trip found with ID " << id << ".\n";
+}
+
+void deleteInvoice(vector<unique_ptr<Invoice>> &invoices) {
+  if (invoices.empty()) {
+    cout << "[ERROR] No invoices to delete.\n";
+    return;
+  }
+  cout << "\nAll Invoices:\n";
+  for (const auto &inv : invoices) {
+    cout << fixed << setprecision(2);
+    cout << "  [ID: " << inv->getInvoiceId() << "]  Rs." << inv->getTotal()
+         << "  —  " << (inv->getPaymentStatus() ? "PAID" : "PENDING") << "\n";
+  }
+
+  int id;
+  cout << "Enter Invoice ID to delete: ";
+  cin >> id;
+
+  for (auto it = invoices.begin(); it != invoices.end(); ++it) {
+    if ((*it)->getInvoiceId() == id) {
+      invoices.erase(it);
+      saveInvoices(invoices);
+      cout << "[SUCCESS] Invoice " << id << " deleted.\n";
+      return;
+    }
+  }
+
+  cout << "[ERROR] No invoice found with ID " << id << ".\n";
+}
+
 double getNumber(const string &prompt) {
   double value;
   cout << prompt;
@@ -354,7 +446,10 @@ int main() {
     cout << "3. Generate Invoice\n";
     cout << "4. Process Payment\n";
     cout << "5. View All Invoices\n";
-    cout << "6. Exit\n";
+    cout << "6. Delete Client\n";
+    cout << "7. Delete Trip\n";
+    cout << "8. Delete Invoice\n";
+    cout << "9. Exit\n";
     cout << "Enter your choice: ";
     cin >> choice;
 
@@ -501,11 +596,20 @@ int main() {
       for (const auto &inv : invoices)
         inv->generateInvoice();
 
-    } else if (choice != 6) {
+    } else if (choice == 6) {
+      deleteClient(clients, invoices);
+
+    } else if (choice == 7) {
+      deleteTrip(trips, invoices);
+
+    } else if (choice == 8) {
+      deleteInvoice(invoices);
+
+    } else if (choice != 9) {
       cout << "[ERROR] Invalid choice. Try again.\n";
     }
 
-  } while (choice != 6);
+  } while (choice != 9);
 
   cout << "\nExiting system. All data saved. Goodbye!\n";
 
