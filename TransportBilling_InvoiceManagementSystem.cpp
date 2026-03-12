@@ -339,7 +339,6 @@ int main() {
   int paymentCounter = 9001;
 
   cout << "***************************************************\n";
-  cout << "* ITM Skill University - B.Tech CSE System        *\n";
   cout << "* Transport Billing & Invoice Management System   *\n";
   cout << "***************************************************\n\n";
 
